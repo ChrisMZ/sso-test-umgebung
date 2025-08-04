@@ -9,9 +9,7 @@ services:
       - LDAP_DOMAIN=example.org
       - LDAP_ADMIN_PASSWORD=adminpassword
     volumes:
-      - ./openldap/ldif:/container/service/slapd/assets/config/bootstrap/ldif
-      - ldap_data:/var/lib/ldap
-      - ldap_config:/etc/ldap/slapd.d
+      - ./openldap/ldif:/container/service/slapd/assets/config/bootstrap/ldif:z
     ports:
       - "389:389"
     networks:
@@ -27,9 +25,9 @@ services:
       - KC_DB=dev-file
       - KC_PROXY=edge
       - KC_HTTP_RELATIVE_PATH=/auth
-      - KC_HOSTNAME_STRICT=false # Nur für Testzwecke
+      - KC_HOSTNAME_STRICT=false
     volumes:
-      - ./keycloak/realm-config:/opt/keycloak/data/import
+      - ./keycloak/realm-config:/opt/keycloak/data/import:z
     ports:
       - "8080:8080"
     networks:
@@ -40,15 +38,7 @@ services:
   step-ca:
     image: smallstep/step-ca:0.26.1
     container_name: step-ca
-    # 'user: root' wird ENTFERNT. Das ist der wichtigste Teil der Korrektur.
-    # Stattdessen überschreiben wir den Start-Befehl, um die Berechtigungen zu korrigieren.
-    command: >
-      sh -c "
-      chown -R 1000:1000 /home/step &&
-      exec /usr/local/bin/docker-entrypoint.sh
-      "
     environment:
-      # Diese Umgebungsvariablen sind alle korrekt und bleiben erhalten.
       - DOCKER_STEPCA_INIT_NAME=SSO Test CA
       - DOCKER_STEPCA_INIT_DNS=step-ca,localhost
       - DOCKER_STEPCA_INIT_ADDRESS=:9000
@@ -61,23 +51,26 @@ services:
     ports:
       - "9000:9000"
     volumes:
-      - step_ca_config:/home/step/config
-      - ./step-ca/secrets:/home/step/secrets
-      - step_ca_data:/home/step/db
-      - step_ca_certs:/home/step/certs
+      # Wir verwenden nur noch Bind Mounts mit dem SELinux/AppArmor Flag `:z`
+      - ./step-ca/config:/home/step/config:z
+      - ./step-ca/secrets:/home/step/secrets:z
+      - ./step-ca/db:/home/step/db:z
+      - ./step-ca/certs:/home/step/certs:z
     networks:
       - sso_network
     depends_on:
       - keycloak
 
   sshd-server:
-    build: ./sshd-server
+    build:
+      context: ./sshd-server
+      # Dockerfile im Kontext reicht aus
     container_name: sshd-server
     ports:
       - "2222:22"
     volumes:
-      # Wir mounten den Ordner, in den das Skript das CA-Zertifikat kopiert
-      - step_ca_certs:/step-ca-certs:ro
+      # Wir mounten das certs-Verzeichnis, damit das Start-Skript die CA kopieren kann
+      - ./step-ca/certs:/step-ca-certs:ro,z
     networks:
       - sso_network
     depends_on:
@@ -90,20 +83,13 @@ services:
     networks:
       - sso_network
     volumes:
-      - step_cli_data:/home/step
+      # Auch hier zur Sicherheit der Flag
+      - ./step-cli-data:/home/step:z
     depends_on:
       - sshd-server
-
 
 networks:
   sso_network:
     driver: bridge
 
-volumes:
-  ldap_data:
-  ldap_config:
-  # ÄNDERUNG: step_ca_config wurde hinzugefügt
-  step_ca_config:
-  step_ca_data:
-  step_ca_certs:
-  step_cli_data:
+# Wir verwenden keine benannten Volumes mehr, um Berechtigungsprobleme zu vermeiden
