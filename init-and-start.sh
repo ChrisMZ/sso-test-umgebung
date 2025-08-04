@@ -13,18 +13,15 @@ docker-compose up -d openldap keycloak
 
 # Wait for Keycloak to be ready
 echo "--- Waiting for Keycloak to start (approx. 30 seconds)... ---"
-# Eine einfache Wartezeit ist hier meist ausreichend, da Keycloak keine einzelne Datei erzeugt, auf die wir warten könnten.
 sleep 30
 
 # Start step-ca, which will initialize on first run
 echo "--- Starting and initializing Step-CA... ---"
 docker-compose up -d step-ca
 
-# === INTELLIGENTE WARTE-SCHLEIFE START ===
-# Anstatt blind 10s zu warten, prüfen wir aktiv, ob die Datei existiert.
-echo "--- Waiting for Step-CA to generate root certificate... ---"
+# Wait for step-ca to generate its root certificate
+echo "--- Waiting for Step-CA to initialize... ---"
 COUNTER=0
-# Die Schleife läuft, solange der 'test -f' Befehl im Container fehlschlägt (also die Datei nicht findet)
 while ! docker exec step-ca test -f /home/step/certs/root_ca.crt; do
     if [ ${COUNTER} -ge 20 ]; then
         echo "!! ERROR: Timeout (40s) waiting for step-ca to initialize. Aborting."
@@ -33,13 +30,28 @@ while ! docker exec step-ca test -f /home/step/certs/root_ca.crt; do
     fi
     sleep 2
     COUNTER=$((COUNTER+1))
-    echo "    ... still waiting for certificate ..."
+    echo "    ... still waiting for initialization ..."
 done
-echo "--- CA certificate found! Proceeding... ---"
-# === INTELLIGENTE WARTE-SCHLEIFE ENDE ===
+echo "--- CA initialization complete! ---"
+
+# === NEUER SCHRITT: OIDC PROVISIONER KONFIGURIEREN ===
+echo "--- Adding OIDC Provisioner to Step-CA... ---"
+docker exec step-ca step ca provisioner add Keycloak --type OIDC \
+  --client-id ssh-step-cli \
+  --client-secret very-secret-ssh-client-password \
+  --configuration-endpoint http://keycloak:8080/auth/realms/sso-test/.well-known/openid-configuration \
+  --admin-provisioner "admin" --admin-password-file /home/step/secrets/password
+
+# Check if the last command was successful
+if [ $? -ne 0 ]; then
+    echo "!! ERROR: Failed to add OIDC provisioner. Aborting."
+    echo "!! Please check the container logs for errors: docker logs step-ca"
+    exit 1
+fi
+echo "--- OIDC Provisioner configured successfully. ---"
+# ===================================================
 
 # Step-CA's root public key is needed by the SSH server.
-# We copy it from the volume into the sshd-server's build context.
 echo "--- Copying CA public key to SSH server config... ---"
 if [ -d "./sshd-server/ca" ]; then
     rm -rf ./sshd-server/ca
@@ -61,4 +73,4 @@ echo "---"
 echo "--- ✅ Setup Complete! ---"
 echo "---"
 echo "Keycloak Admin UI: http://localhost:8080 (admin/admin)"
-echo "Next steps are in the guide."
+echo "You can now test the SSH login as described in the guide."
