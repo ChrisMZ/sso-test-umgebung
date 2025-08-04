@@ -53,10 +53,10 @@ services:
       - "9000:9000"
     volumes:
       - ./step-ca/config:/home/step/config
+      # KORREKTUR: Nur noch der Bind-Mount für die Secrets
       - ./step-ca/secrets:/home/step/secrets
       - step_ca_data:/home/step/db
       - step_ca_certs:/home/step/certs
-      - step_ca_secrets_vol:/home/step/secrets
     networks:
       - sso_network
     depends_on:
@@ -96,5 +96,5 @@ volumes:
   ldap_config:
   step_ca_data:
   step_ca_certs:
-  step_ca_secrets_vol:
+  # KORREKTUR: Das überflüssige Volume wurde hier entfernt
   step_cli_data:
