@@ -13,7 +13,10 @@
 6. Web-Client (Konzeptionell): Wir konfigurieren Keycloak für einen Web-Client. Der Bau eines solchen Clients sprengt den Rahmen, aber die Konfiguration in Keycloak zeigt, wie es funktionieren würde.
 
 
-#1. Starten der Umgebung
+
+
+
+# 1. Starten der Umgebung
 Führen Sie das init-and-start.sh-Skript aus, um die gesamte Umgebung zu starten.
 
 Bash
@@ -28,7 +31,7 @@ __Führen Sie das Skript aus__
 
 Das Skript wird alle Container in der richtigen Reihenfolge starten und die notwendigen Konfigurationen kopieren.
 
-#2. Keycloak und LDAP-Synchronisation überprüfen
+# 2. Keycloak und LDAP-Synchronisation überprüfen
 
 Öffnen Sie die Keycloak Admin Console in Ihrem Browser: http://localhost:8080.
 
@@ -42,26 +45,23 @@ Klicken Sie auf den Provider und dann auf den Action-Button oben rechts. Wählen
 
 Gehen Sie nun im Menü auf Users. Sie sollten sshuser und testuser1 in der Liste sehen. Der LDAP-Sync war erfolgreich!
 
-#3. SSH-Login via OIDC/SSO testen
+# 3. SSH-Login via OIDC/SSO testen
 
 Dies ist der Kern des Tests. Wir verwenden den test-client Container, um den Login-Flow zu initiieren.
 
 Öffnen Sie eine Shell im test-client Container:
 
-Bash
 
 docker exec -it test-client /bin/sh
 Innerhalb des Containers, führen Sie die folgenden Befehle aus. Zuerst müssen wir der step-CLI mitteilen, wo sie unsere CA findet und ihr vertrauen:
 
-Bash
 
-# Bootstrap step-cli to trust our custom CA
+__Bootstrap step-cli to trust our custom CA__
+
 step ca bootstrap --ca-url https://step-ca:9000 --fingerprint $(step ca fingerprint https://step-ca:9000) --install
 (Hinweis: Der Fingerprint-Befehl funktioniert, weil die Container im selben Netzwerk sind. --install ist hier für die Vollständigkeit.)
 
 Initiieren Sie jetzt den SSH-Login:
-
-Bash
 
 step ssh login sshuser --remote-user sshuser --port 22 sshd-server
 sshuser: Der Principal (Benutzername), den wir für unser Zertifikat anfordern.
