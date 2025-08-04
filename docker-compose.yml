@@ -38,6 +38,12 @@ services:
   step-ca:
     image: smallstep/step-ca:0.26.1
     container_name: step-ca
+    # Wir kombinieren den chown-Befehl mit den :z Flags
+    command: >
+      sh -c "
+      chown -R 1000:1000 /home/step &&
+      exec /usr/local/bin/docker-entrypoint.sh
+      "
     environment:
       - DOCKER_STEPCA_INIT_NAME=SSO Test CA
       - DOCKER_STEPCA_INIT_DNS=step-ca,localhost
@@ -51,7 +57,7 @@ services:
     ports:
       - "9000:9000"
     volumes:
-      # Wir verwenden nur noch Bind Mounts mit dem SELinux/AppArmor Flag `:z`
+      # Wir verwenden Bind Mounts MIT dem SELinux/AppArmor Flag `:z`
       - ./step-ca/config:/home/step/config:z
       - ./step-ca/secrets:/home/step/secrets:z
       - ./step-ca/db:/home/step/db:z
@@ -64,12 +70,10 @@ services:
   sshd-server:
     build:
       context: ./sshd-server
-      # Dockerfile im Kontext reicht aus
     container_name: sshd-server
     ports:
       - "2222:22"
     volumes:
-      # Wir mounten das certs-Verzeichnis, damit das Start-Skript die CA kopieren kann
       - ./step-ca/certs:/step-ca-certs:ro,z
     networks:
       - sso_network
@@ -83,7 +87,6 @@ services:
     networks:
       - sso_network
     volumes:
-      # Auch hier zur Sicherheit der Flag
       - ./step-cli-data:/home/step:z
     depends_on:
       - sshd-server
@@ -91,5 +94,3 @@ services:
 networks:
   sso_network:
     driver: bridge
-
-# Wir verwenden keine benannten Volumes mehr, um Berechtigungsprobleme zu vermeiden
