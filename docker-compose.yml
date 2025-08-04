@@ -45,8 +45,8 @@ services:
       - DOCKER_STEPCA_INIT_DNS=step-ca,localhost
       - DOCKER_STEPCA_INIT_ADDRESS=:9000
       - DOCKER_STEPCA_INIT_PROVISIONER=admin
-      - DOCKER_STEPCA_INIT_CA_PASSWORD_FILE=/home/step/secrets/ca_password.txt
-      - DOCKER_STEPCA_INIT_PROVISIONER_PASSWORD_FILE=/home/step/secrets/ca_password.txt
+      - DOCKER_STEPCA_INIT_CA_PASSWORD_FILE=/home/step/secrets/password
+      - DOCKER_STEPCA_INIT_PROVISIONER_PASSWORD_FILE=/home/step/secrets/password
       - DOCKER_STEPCA_INIT_ADMIN_PROVISIONER=admin
       - DOCKER_STEPCA_INIT_ADMIN_SUBJECT=admin
       - STEPPATH=/home/step
