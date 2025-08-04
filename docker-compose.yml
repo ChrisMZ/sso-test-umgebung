@@ -40,6 +40,7 @@ services:
   step-ca:
     image: smallstep/step-ca:0.26.1
     container_name: step-ca
+    user: root
     environment:
       - DOCKER_STEPCA_INIT_NAME=SSO Test CA
       - DOCKER_STEPCA_INIT_DNS=step-ca,localhost
