@@ -38,12 +38,7 @@ services:
   step-ca:
     image: smallstep/step-ca:0.26.1
     container_name: step-ca
-    # Wir kombinieren den chown-Befehl mit den :z Flags
-    command: >
-      sh -c "
-      chown -R 1000:1000 /home/step &&
-      exec /usr/local/bin/docker-entrypoint.sh
-      "
+    # Keine user- oder command-Overrides. Wir verlassen uns auf die Berechtigungen unten.
     environment:
       - DOCKER_STEPCA_INIT_NAME=SSO Test CA
       - DOCKER_STEPCA_INIT_DNS=step-ca,localhost
@@ -57,7 +52,6 @@ services:
     ports:
       - "9000:9000"
     volumes:
-      # Wir verwenden Bind Mounts MIT dem SELinux/AppArmor Flag `:z`
       - ./step-ca/config:/home/step/config:z
       - ./step-ca/secrets:/home/step/secrets:z
       - ./step-ca/db:/home/step/db:z
