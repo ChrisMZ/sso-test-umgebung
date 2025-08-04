@@ -40,8 +40,15 @@ services:
   step-ca:
     image: smallstep/step-ca:0.26.1
     container_name: step-ca
-    user: root
+    # 'user: root' wird ENTFERNT. Das ist der wichtigste Teil der Korrektur.
+    # Stattdessen überschreiben wir den Start-Befehl, um die Berechtigungen zu korrigieren.
+    command: >
+      sh -c "
+      chown -R 1000:1000 /home/step &&
+      exec /usr/local/bin/docker-entrypoint.sh
+      "
     environment:
+      # Diese Umgebungsvariablen sind alle korrekt und bleiben erhalten.
       - DOCKER_STEPCA_INIT_NAME=SSO Test CA
       - DOCKER_STEPCA_INIT_DNS=step-ca,localhost
       - DOCKER_STEPCA_INIT_ADDRESS=:9000
@@ -54,7 +61,6 @@ services:
     ports:
       - "9000:9000"
     volumes:
-      # ÄNDERUNG: Bind-Mount für config durch benanntes Volume ersetzt
       - step_ca_config:/home/step/config
       - ./step-ca/secrets:/home/step/secrets
       - step_ca_data:/home/step/db
