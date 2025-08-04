@@ -9,11 +9,14 @@ docker-compose down -v --remove-orphans
 
 # --- VERZEICHNISSE ERSTELLEN ---
 echo "--- Creating necessary host directories... ---"
-mkdir -p ./step-ca/config ./step-ca/secrets ./step-ca/db ./step-ca/certs ./step-cli-data
-# Passwort-Datei erstellen (falls sie nach dem mv gelöscht wurde)
+mkdir -p ./step-ca/config ./step-ca/secrets ./step-ca/db ./step-ca/certs ./step-cli-data ./sshd-server
 echo "SuperSecretPassword123" > ./step-ca/secrets/password
-# Sicherstellen, dass das Verzeichnis für den SSH-Server existiert
-mkdir -p ./sshd-server
+
+# --- HOLZHAMMER-ANSATZ: BERECHTIGUNGEN SETZEN ---
+echo "--- Setting permissive rights on volumes to bypass host restrictions... ---"
+chmod -R 777 ./step-ca
+chmod -R 777 ./step-cli-data
+# --- ENDE HOLZHAMMER-ANSATZ ---
 
 # --- DIENSTE STARTEN ---
 echo "--- Starting OpenLDAP and Keycloak... ---"
