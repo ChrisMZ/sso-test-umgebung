@@ -1,0 +1,29 @@
+dn: ou=people,dc=example,dc=org
+objectClass: organizationalUnit
+ou: people
+
+dn: uid=testuser1,ou=people,dc=example,dc=org
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: top
+cn: Test User
+sn: One
+uid: testuser1
+uidNumber: 1001
+gidNumber: 1001
+homeDirectory: /home/testuser1
+mail: testuser1@example.org
+userPassword: password123
+
+dn: uid=sshuser,ou=people,dc=example,dc=org
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: top
+cn: SSH User
+sn: Ssh
+uid: sshuser
+uidNumber: 1002
+gidNumber: 1002
+homeDirectory: /home/sshuser
+mail: sshuser@example.org
+userPassword: password123

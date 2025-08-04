@@ -1,0 +1,27 @@
+Port 22
+Protocol 2
+HostKey /etc/ssh/ssh_host_rsa_key
+HostKey /etc/ssh/ssh_host_dsa_key
+HostKey /etc/ssh/ssh_host_ecdsa_key
+HostKey /etc/ssh/ssh_host_ed25519_key
+
+# Logging
+SyslogFacility AUTH
+LogLevel INFO
+
+# Authentication:
+LoginGraceTime 120
+PermitRootLogin no
+StrictModes yes
+PubkeyAuthentication yes
+PasswordAuthentication no
+PermitEmptyPasswords no
+ChallengeResponseAuthentication no
+UsePAM yes
+
+# Crucial lines for CA-based authentication
+TrustedUserCAKeys /etc/ssh/ca/root_ca.pub
+AuthorizedPrincipalsFile /etc/ssh/authorized_principals
+
+# Allow client to pass locale environment variables
+AcceptEnv LANG LC_*

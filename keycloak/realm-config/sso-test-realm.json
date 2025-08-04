@@ -1,0 +1,104 @@
+{
+  "realm": "sso-test",
+  "enabled": true,
+  "users": [],
+  "clients": [
+    {
+      "clientId": "webapp-client",
+      "name": "Web App Client",
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "directAccessGrantsEnabled": true,
+      "redirectUris": [
+        "http://localhost:8082/*"
+      ],
+      "webOrigins": [
+        "http://localhost:8082"
+      ],
+      "fullScopeAllowed": true
+    },
+    {
+      "clientId": "ssh-step-cli",
+      "name": "SSH Step CLI",
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "very-secret-ssh-client-password",
+      "directAccessGrantsEnabled": false,
+      "standardFlowEnabled": true,
+      "redirectUris": [
+        "http://127.0.0.1:10000/callback"
+      ],
+      "fullScopeAllowed": true
+    }
+  ],
+  "userFederationProviders": [
+    {
+      "name": "ldap-provider",
+      "providerName": "ldap",
+      "config": {
+        "enabled": ["true"],
+        "vendor": ["other"],
+        "connectionUrl": ["ldap://openldap:389"],
+        "usersDn": ["ou=people,dc=example,dc=org"],
+        "bindDn": ["cn=admin,dc=example,dc=org"],
+        "bindCredential": ["adminpassword"],
+        "authType": ["simple"],
+        "usernameLdapAttribute": ["uid"],
+        "rdnLdapAttribute": ["uid"],
+        "uuidLdapAttribute": ["entryUUID"],
+        "userObjectClasses": ["inetOrgPerson, posixAccount"],
+        "useTruststoreSpi": ["ldapsOnly"],
+        "importEnabled": ["true"],
+        "syncRegistrations": ["false"],
+        "periodicFullSyncEnabled": ["true"],
+        "periodicChangedUsersSyncEnabled": ["true"]
+      }
+    }
+  ],
+  "userFederationMappers": [
+    {
+        "name": "username-mapper",
+        "federationProviderDisplayName": "ldap-provider",
+        "federationMapperType": "user-attribute-ldap-mapper",
+        "config": {
+            "user.model.attribute": "username",
+            "ldap.attribute": "uid",
+            "is.mandatory.in.ldap": "true",
+            "read.only": "true"
+        }
+    },
+    {
+        "name": "email-mapper",
+        "federationProviderDisplayName": "ldap-provider",
+        "federationMapperType": "user-attribute-ldap-mapper",
+        "config": {
+            "user.model.attribute": "email",
+            "ldap.attribute": "mail",
+            "is.mandatory.in.ldap": "false",
+            "read.only": "true"
+        }
+    },
+    {
+        "name": "first-name-mapper",
+        "federationProviderDisplayName": "ldap-provider",
+        "federationMapperType": "user-attribute-ldap-mapper",
+        "config": {
+            "user.model.attribute": "firstName",
+            "ldap.attribute": "cn",
+            "is.mandatory.in.ldap": "false",
+            "read.only": "true"
+        }
+    },
+    {
+        "name": "last-name-mapper",
+        "federationProviderDisplayName": "ldap-provider",
+        "federationMapperType": "user-attribute-ldap-mapper",
+        "config": {
+            "user.model.attribute": "lastName",
+            "ldap.attribute": "sn",
+            "is.mandatory.in.ldap": "false",
+            "read.only": "true"
+        }
+    }
+  ]
+}

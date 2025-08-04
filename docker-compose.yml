@@ -1,0 +1,100 @@
+version: '3.8'
+
+services:
+  openldap:
+    image: osixia/openldap:1.5.0
+    container_name: openldap
+    environment:
+      - LDAP_ORGANISATION=SSO Test
+      - LDAP_DOMAIN=example.org
+      - LDAP_ADMIN_PASSWORD=adminpassword
+    volumes:
+      - ./openldap/ldif:/container/service/slapd/assets/config/bootstrap/ldif
+      - ldap_data:/var/lib/ldap
+      - ldap_config:/etc/ldap/slapd.d
+    ports:
+      - "389:389"
+    networks:
+      - sso_network
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:25.0
+    container_name: keycloak
+    command: start-dev --import-realm
+    environment:
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin
+      - KC_DB=dev-file
+      - KC_PROXY=edge
+      - KC_HTTP_RELATIVE_PATH=/auth
+      - KC_HOSTNAME_STRICT=false # Nur für Testzwecke
+    volumes:
+      - ./keycloak/realm-config:/opt/keycloak/data/import
+    ports:
+      - "8080:8080"
+    networks:
+      - sso_network
+    depends_on:
+      - openldap
+
+  step-ca:
+    image: smallstep/step-ca:0.26.1
+    container_name: step-ca
+    environment:
+      - DOCKER_STEPCA_INIT_NAME=SSO Test CA
+      - DOCKER_STEPCA_INIT_DNS=step-ca,localhost
+      - DOCKER_STEPCA_INIT_ADDRESS=:9000
+      - DOCKER_STEPCA_INIT_PROVISIONER=admin
+      - DOCKER_STEPCA_INIT_PROVISIONER_PASSWORD_FILE=/home/step/secrets/ca_password.txt
+      - DOCKER_STEPCA_INIT_ADMIN_PROVISIONER=admin
+      - DOCKER_STEPCA_INIT_ADMIN_SUBJECT=admin
+      - STEPPATH=/home/step
+    ports:
+      - "9000:9000"
+    volumes:
+      - ./step-ca/config:/home/step/config
+      - ./step-ca/secrets:/home/step/secrets
+      - step_ca_data:/home/step/db
+      - step_ca_certs:/home/step/certs
+      - step_ca_secrets_vol:/home/step/secrets
+    networks:
+      - sso_network
+    depends_on:
+      - keycloak
+
+  sshd-server:
+    build: ./sshd-server
+    container_name: sshd-server
+    ports:
+      - "2222:22"
+    volumes:
+      # Wir mounten den Ordner, in den das Skript das CA-Zertifikat kopiert
+      - step_ca_certs:/step-ca-certs:ro
+    networks:
+      - sso_network
+    depends_on:
+      - step-ca
+
+  test-client:
+    image: smallstep/step-cli:0.26.1
+    container_name: test-client
+    command: sleep infinity
+    networks:
+      - sso_network
+    volumes:
+      - step_cli_data:/home/step
+    depends_on:
+      - sshd-server
+
+
+networks:
+  sso_network:
+    driver: bridge
+
+volumes:
+  ldap_data:
+  ldap_config:
+  step_ca_data:
+  step_ca_certs:
+  step_ca_secrets_vol:
+  step_cli_data:
