@@ -54,8 +54,8 @@ services:
     ports:
       - "9000:9000"
     volumes:
-      - ./step-ca/config:/home/step/config
-      # KORREKTUR: Nur noch der Bind-Mount für die Secrets
+      # ÄNDERUNG: Bind-Mount für config durch benanntes Volume ersetzt
+      - step_ca_config:/home/step/config
       - ./step-ca/secrets:/home/step/secrets
       - step_ca_data:/home/step/db
       - step_ca_certs:/home/step/certs
@@ -96,7 +96,8 @@ networks:
 volumes:
   ldap_data:
   ldap_config:
+  # ÄNDERUNG: step_ca_config wurde hinzugefügt
+  step_ca_config:
   step_ca_data:
   step_ca_certs:
-  # KORREKTUR: Das überflüssige Volume wurde hier entfernt
   step_cli_data:
